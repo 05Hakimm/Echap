@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 485dbf54d0d18c9448c6046fb20fad6e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - modelCommun: {instanceID: 0}
+  - modelRare: {instanceID: 0}
+  - modelEpique: {instanceID: 0}
+  - modelLegendaire: {instanceID: 0}
+  - modelMythique: {instanceID: 0}
+  - cursorNormal: {fileID: 2800000, guid: 87e323d41d919fd4ea140f3e9a6a7e48, type: 3}
+  - cursorPointer: {fileID: 2800000, guid: 2cf7d9f591f75894fae39ed784c70347, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

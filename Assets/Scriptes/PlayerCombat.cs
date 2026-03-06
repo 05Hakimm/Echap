@@ -5,15 +5,16 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("Paramètres d'Attaque")]
     public Animator anim;
-    public float attackRate = 3f;
+    public float attackRate = 1.5f;
     public int attackCount = 1;
     public float delayBetweenShots = 0.2f;
 
     [Header("Stats de Combat")]
     public Transform attackPoint;
     public float attackRange = 0.5f;
-    public int attackDamage = 40;
-    public float knockbackForce = 5f; 
+    public int baseDamage = 40;
+    public float damageMultiplier = 1.0f; // Commence à 100% (1.0)
+    public float knockbackForce = 5f;
     public LayerMask enemyLayers;
 
     private float nextAttackTime = 0f;
@@ -43,19 +44,19 @@ public class PlayerCombat : MonoBehaviour
         anim.SetTrigger("Attack");
         comboStep = (comboStep == 0) ? 1 : 0;
 
+        // Calcul des dégâts finaux avec le multiplicateur
+        int finalDamage = Mathf.RoundToInt(baseDamage * damageMultiplier);
+
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
 
         foreach (Collider2D enemy in hitEnemies)
         {
-            // 1. Dégâts
             Health enemyHealth = enemy.GetComponent<Health>();
-            if (enemyHealth != null) enemyHealth.TakeDamage(attackDamage);
+            if (enemyHealth != null) enemyHealth.TakeDamage(finalDamage);
 
-            // 2. Recul (Knockback)
             EnemyAI enemyAI = enemy.GetComponent<EnemyAI>();
             if (enemyAI != null)
             {
-                // On calcule la direction du recul (du joueur vers l'ennemi)
                 Vector2 knockbackDirection = (enemy.transform.position - transform.position).normalized;
                 enemyAI.ApplyKnockback(knockbackDirection * knockbackForce);
             }

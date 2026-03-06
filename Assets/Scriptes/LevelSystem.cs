@@ -1,30 +1,33 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+// Ce script gère l'XP du joueur, la barre bleue et l'arrêt du temps pour le menu
 public class LevelSystem : MonoBehaviour
 {
-    [Header("Statistiques d'XP")]
+    [Header("Statistiques XP")]
     public int currentLevel = 1;
     public int currentXP = 0;
     public int xpToNextLevel = 100;
 
-    [Header("Interface")]
-    public Image xpFillImage; // L'image de remplissage
-    public Text levelText;    // Le texte du niveau
-    public GameObject upgradePanel; // Le menu de choix d'améliorations
+    [Header("Interface UI")]
+    public Image xpFillImage;      // L'image de remplissage (la barre bleue)
+    public GameObject upgradePanel; // Le fond du menu
+
+    private UpgradeManager upgradeManager;
 
     void Start()
     {
-
-        // On cache le menu de niveau supérieur au début
+        // On cherche le gestionnaire d'améliorations sur l'UpgradePanel
         if (upgradePanel != null)
         {
+            upgradeManager = upgradePanel.GetComponent<UpgradeManager>();
             upgradePanel.SetActive(false);
         }
 
         UpdateUI();
     }
 
+    // Appelée quand le joueur ramasse un objet d'XP
     public void AddExperience(int amount)
     {
         currentXP += amount;
@@ -42,33 +45,29 @@ public class LevelSystem : MonoBehaviour
         currentLevel++;
         currentXP -= xpToNextLevel;
 
-        // Augmentation de l'XP requise pour le niveau suivant
-        xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.2f);
+        // On augmente l'exigence pour le prochain niveau (+25%)
+        xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.25f);
 
-        Debug.Log("NIVEAU SUPÉRIEUR !");
-
-        // Ouvre le menu et met le jeu en pause
-        OpenUpgradeMenu();
-
-        UpdateUI();
-    }
-
-    void OpenUpgradeMenu()
-    {
+        // On affiche le menu et on fige le jeu
         if (upgradePanel != null)
         {
             upgradePanel.SetActive(true);
-            Time.timeScale = 0f; // Pause le jeu
+            Time.timeScale = 0f;
+
+            if (upgradeManager != null)
+            {
+                upgradeManager.GenerateUpgradeChoices();
+            }
         }
     }
 
-    // Cette fonction sera appelée par les boutons de ton menu d'amélioration
+    // Appelé par le bouton d'amélioration pour reprendre la partie
     public void CloseUpgradeMenu()
     {
         if (upgradePanel != null)
         {
             upgradePanel.SetActive(false);
-            Time.timeScale = 1f; // Reprend le jeu
+            Time.timeScale = 1f;
         }
     }
 
@@ -76,13 +75,7 @@ public class LevelSystem : MonoBehaviour
     {
         if (xpFillImage != null)
         {
-            // Calcul du remplissage
             xpFillImage.fillAmount = (float)currentXP / xpToNextLevel;
-        }
-
-        if (levelText != null)
-        {
-            levelText.text = "NIVEAU " + currentLevel;
         }
     }
 }
