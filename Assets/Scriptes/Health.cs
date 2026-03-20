@@ -3,25 +3,23 @@ using UnityEngine.UI;
 
 public class Health : MonoBehaviour
 {
+    [Header("Stats")]
     public int maxHealth = 100;
     public int currentHealth;
-    public GameObject xpPrefab;
 
-    [Range(0f, 1f)]
-    public float xpDropRate = 0.5f;
+    [Header("UI (Optionnel)")]
+    public Image redFillImage; // La petite barre au-dessus de l'ennemi/joueur
 
-    //l'image de la barre rouge dedans
-    public Image redFillImage;
+    // Ces variables sont remplies automatiquement par le Spawner pour le Boss
+    [HideInInspector] public Image barreBossExterne;
+    [HideInInspector] public GameObject rootBarreBoss;
+
+    public GameObject xpPrefab; // Cristal d'XP à lâcher à la mort
 
     void Start()
     {
         currentHealth = maxHealth;
         UpdateUI();
-    }
-
-    void Update()
-    {
-
     }
 
     public void TakeDamage(int damage)
@@ -38,10 +36,18 @@ public class Health : MonoBehaviour
 
     void UpdateUI()
     {
+        float ratio = (float)currentHealth / maxHealth;
+
+        // Mise à jour de la barre classique (au-dessus de la tête ou HUD joueur)
         if (redFillImage != null)
         {
-            // Calcul du remplissage entre 0 et 1 de la partie rouge de la barre de vie
-            redFillImage.fillAmount = (float)currentHealth / maxHealth;
+            redFillImage.fillAmount = ratio;
+        }
+
+        // Mise à jour de la barre de Boss (si c'est un boss)
+        if (barreBossExterne != null)
+        {
+            barreBossExterne.fillAmount = ratio;
         }
     }
 
@@ -49,17 +55,19 @@ public class Health : MonoBehaviour
     {
         if (gameObject.CompareTag("Enemy"))
         {
-            // L'XP ne tombe que si le calcul aléatoire est inférieur au taux de drop
-            if (xpPrefab != null && Random.value <= xpDropRate)
-            {
-                Instantiate(xpPrefab, transform.position, Quaternion.identity);
-            }
+            // Si c'était un boss, on cache la grande barre à sa mort
+            if (rootBarreBoss != null) rootBarreBoss.SetActive(false);
+
+            // Drop d'XP
+            if (xpPrefab != null) Instantiate(xpPrefab, transform.position, Quaternion.identity);
+
             Destroy(gameObject);
         }
         else if (gameObject.CompareTag("Player"))
         {
-            // Ici on mettra l'écran de Game Over
-            Debug.Log("GAME OVER");
+            // Ici tu peux ajouter ton écran de Game Over
+            Debug.Log("JOUEUR MORT");
+            Time.timeScale = 0f;
         }
     }
 }
