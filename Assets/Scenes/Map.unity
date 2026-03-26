@@ -14994,9 +14994,9 @@ MonoBehaviour:
   spawnRadius: 12
   initialSpawnInterval: 3
   barreBossRoot: {fileID: 1471923306}
-  barreBossRemplissage: {fileID: 1130800605}
   nomBossTexte: {fileID: 1455516581}
   iconeBossAffichage: {fileID: 301370919}
+  barreBossRemplissage: {fileID: 1130800605}
   phasesDeJeu:
   - nomDeLaPhase: Snake
     debutA_X_Secondes: 0
@@ -16302,6 +16302,9 @@ MonoBehaviour:
   maxHealth: 150
   currentHealth: 0
   redFillImage: {fileID: 3641836342125682185}
+  deathAnimController: {fileID: 9100000, guid: cd7d9090f10e103419d96543a2b2f508, type: 2}
+  deathTriggerName: StartDeath
+  scriptsADesactiver: []
   barreBossExterne: {fileID: 0}
   rootBarreBoss: {fileID: 0}
   xpPrefab: {fileID: 0}
@@ -16321,6 +16324,7 @@ MonoBehaviour:
   currentXP: 0
   xpToNextLevel: 100
   xpFillImage: {fileID: 2078553118}
+  levelText: {fileID: 0}
   upgradePanel: {fileID: 754329628}
 --- !u!1 &1361248676
 GameObject:
