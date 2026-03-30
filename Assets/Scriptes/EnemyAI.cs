@@ -72,7 +72,7 @@ public class EnemyAI : MonoBehaviour
             Vector2 newPos = Vector2.MoveTowards(rb.position, player.position, speed * Time.deltaTime);
             rb.MovePosition(newPos);
 
-            // --- GESTION DE L'ORIENTATION ---
+            // GESTION DE L'ORIENTATION
             // On récupère la taille actuelle (pour ne pas rétrécir le boss)
             float currentAbsX = Mathf.Abs(transform.localScale.x);
 

@@ -23,10 +23,10 @@ public class EnemySpawner : MonoBehaviour
     public float initialSpawnInterval = 2.0f;
 
     [Header("Interface Boss (HIERARCHIE SPECIFIQUE)")]
-    public GameObject barreBossRoot;       // Glisse "BarreDeVieBoss" ici
-    public TMP_Text nomBossTexte;         // Glisse "NomBoss" ici
-    public Image iconeBossAffichage;      // Glisse "IconeBoss_Image" ici
-    public Image barreBossRemplissage;    // L'image rouge de la barre
+    public GameObject barreBossRoot;
+    public TMP_Text nomBossTexte;   
+    public Image iconeBossAffichage;      
+    public Image barreBossRemplissage;
 
     [Header("Phases du Jeu")]
     public List<EnemyEvolution> phasesDeJeu;
@@ -48,7 +48,6 @@ public class EnemySpawner : MonoBehaviour
         if (playerObj != null) player = playerObj.transform;
         currentSpawnInterval = initialSpawnInterval;
 
-        // --- FIX : CACHE CHAQUE ELEMENT SEPAREMENT ---
         HideBossUI();
     }
 
@@ -68,7 +67,7 @@ public class EnemySpawner : MonoBehaviour
                 SpawnEnemy(phaseActuelle);
                 phasesDeclenchees.Add(phaseActuelle.nomDeLaPhase);
 
-                // AFFICHAGE CIBLE
+              
                 if (barreBossRoot != null) barreBossRoot.SetActive(true);
                 if (nomBossTexte != null)
                 {
@@ -96,7 +95,7 @@ public class EnemySpawner : MonoBehaviour
     public void NotifyBossDeath()
     {
         bossActive = false;
-        gameTime = 0f; // RETOUR AUX SERPENTS
+        gameTime = 0f; 
         timer = 0f;
         phasesDeclenchees.Clear();
         HideBossUI();

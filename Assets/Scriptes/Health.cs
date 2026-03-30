@@ -2,29 +2,30 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-// Ce script gère la vie, les dégâts et la séquence de mort précise.
+// gestion vie et mort
 public class Health : MonoBehaviour
 {
-    [Header("Statistiques")]
+    [Header("Stats")]
     public int maxHealth = 100;
     public int currentHealth;
 
-    [Header("Interface Classique")]
+    [Header("UI")]
     public Image redFillImage;
 
-    [Header("Séquence de Mort (Joueur)")]
-    [Tooltip("Glisse ici ton fichier bleu (Animator Controller)")]
+    [Header("Mort Joueur")]
     public RuntimeAnimatorController deathAnimController;
-    public string deathTriggerName = "Die"; // Le nom du Trigger dans ton Animator
-    public MonoBehaviour[] scriptsADesactiver; // Mouvement, Combat, etc.
+    public string deathTriggerName = "Die";
+    public MonoBehaviour[] scriptsADesactiver;
 
-    [Header("UI Boss (Géré par le Spawner)")]
+    [Header("Effet Noir")]
+    public float vitesseNoir = 3f;
+    public float opaciteMax = 1.0f;
+
+    [Header("Boss")]
     [HideInInspector] public Image barreBossExterne;
     [HideInInspector] public GameObject rootBarreBoss;
 
-    [Header("Objets")]
     public GameObject xpPrefab;
-
     private bool isDead = false;
 
     void Start()
@@ -36,11 +37,9 @@ public class Health : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (isDead) return;
-
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         UpdateUI();
-
         if (currentHealth <= 0) Die();
     }
 
@@ -58,71 +57,95 @@ public class Health : MonoBehaviour
 
         if (gameObject.CompareTag("Enemy"))
         {
-            // Mort Ennemi / Boss
             if (rootBarreBoss != null)
             {
-                // Nettoyage radical de l'UI Boss via le spawner
                 EnemySpawner spawner = Object.FindAnyObjectByType<EnemySpawner>();
                 if (spawner != null) spawner.NotifyBossDeath();
-
-                LevelSystem levelSystem = Object.FindAnyObjectByType<LevelSystem>();
-                if (levelSystem != null) levelSystem.ForceLevelUp();
+                Object.FindAnyObjectByType<LevelSystem>()?.ForceLevelUp();
             }
-
             if (xpPrefab != null) Instantiate(xpPrefab, transform.position, Quaternion.identity);
             Destroy(gameObject);
         }
         else if (gameObject.CompareTag("Player"))
         {
-            // --- MORT DU JOUEUR : ACTION IMMEDIATE ---
-            Time.timeScale = 0f; // FREEZE DU JEU IMMEDIAT
+            // lance la mort
             StartCoroutine(SequenceMortJoueur());
         }
     }
 
     IEnumerator SequenceMortJoueur()
     {
-        // 1. On coupe les scripts pour ne plus pouvoir bouger/attaquer
-        foreach (var script in scriptsADesactiver)
+        // stop les scripts
+        foreach (var s in scriptsADesactiver) if (s != null) s.enabled = false;
+
+        // force le perso devant le futur noir
+        SpriteRenderer pSr = GetComponent<SpriteRenderer>();
+        if (pSr != null) pSr.sortingOrder = 30001;
+
+        // creation fond noir
+        GameObject black = new GameObject("Mort_Noir");
+        SpriteRenderer fadeSr = black.AddComponent<SpriteRenderer>();
+        Texture2D tex = new Texture2D(1, 1);
+        tex.SetPixel(0, 0, Color.black);
+        tex.Apply();
+        fadeSr.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1);
+        fadeSr.sortingOrder = 30000; // sous le perso
+        fadeSr.color = new Color(0, 0, 0, 0);
+
+        Camera cam = Camera.main;
+        if (cam != null)
         {
-            if (script != null) script.enabled = false;
+            black.transform.SetParent(cam.transform);
+            black.transform.localPosition = new Vector3(0, 0, 10);
+            float h = cam.orthographicSize * 2f;
+            float w = h * cam.aspect;
+            black.transform.localScale = new Vector3(w * 1.5f, h * 1.5f, 1f);
+
+            // meme calque que le joueur
+            if (pSr != null) fadeSr.sortingLayerName = pSr.sortingLayerName;
         }
 
-        // 2. Création de l'effet d'animation SUR le joueur
+        // ralenti instant + noir progressif (1.1s)
+        float t = 0;
+        float dureeRalenti = 1.1f;
+
+        while (t < dureeRalenti)
+        {
+            t += Time.unscaledDeltaTime;
+            float progression = t / dureeRalenti;
+
+            // noir de + en + (0 a 1)
+            fadeSr.color = new Color(0, 0, 0, progression);
+
+            // ralenti brutal direct (0.2) puis va vers 0
+            Time.timeScale = Mathf.Lerp(0.2f, 0f, progression);
+
+            yield return null;
+        }
+
+        Time.timeScale = 0f; // freeze total
+
+        // lance l'anim de mort
         if (deathAnimController != null)
         {
-            GameObject deathEffect = new GameObject("EffetMort_Joueur");
-            deathEffect.transform.position = transform.position;
+            GameObject effect = new GameObject("EffetMort");
+            effect.transform.position = transform.position;
+            effect.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y), 1f);
+            SpriteRenderer sr = effect.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 30002; // tout devant le perso et le noir
 
-            // On s'assure que l'échelle est positive
-            deathEffect.transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y), 1f);
+            if (pSr != null) sr.sortingLayerName = pSr.sortingLayerName;
 
-            SpriteRenderer sr = deathEffect.AddComponent<SpriteRenderer>();
-            sr.sortingOrder = 32767; // MAXIMUM pour passer devant tout
-
-            SpriteRenderer playerSr = GetComponent<SpriteRenderer>();
-            if (playerSr != null) sr.sortingLayerName = playerSr.sortingLayerName;
-
-            Animator anim = deathEffect.AddComponent<Animator>();
+            Animator anim = effect.AddComponent<Animator>();
             anim.runtimeAnimatorController = deathAnimController;
-
-            // L'animation doit ignorer la pause (TimeScale 0)
             anim.updateMode = AnimatorUpdateMode.UnscaledTime;
-
-            // ON FORCE LE TRIGGER
             anim.SetTrigger(deathTriggerName);
-
-            Debug.Log("Animation de mort lancée.");
         }
 
-        // 3. ATTENTE SYNCHRONISÉE (14 frames à 13 fps ~ 1.08s)
-        // On attend 1.1s pour être sûr que l'anim est finie avant de cacher le perso
+        // attente fin anim (1.1s)
         yield return new WaitForSecondsRealtime(1.1f);
 
-        // 4. DISPARITION DU SPRITE DU JOUEUR (Pile à la fin de l'anim)
-        SpriteRenderer finalSr = GetComponent<SpriteRenderer>();
-        if (finalSr != null) finalSr.enabled = false;
-
-        Debug.Log("Séquence terminée : Le joueur a disparu après son animation.");
+        // disparition du perso
+        if (pSr != null) pSr.enabled = false;
     }
 }
